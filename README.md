@@ -37,7 +37,7 @@ cd gov-api && npm start                    # the government prescription system 
 | Waiting-room board | http://localhost:5173/board | Screen in the waiting room |
 | Staff console | http://localhost:5173/staff | Pharmacists and packagers |
 
-Tests: `make test` runs all of these, and so does CI (`.github/workflows/ci.yml`).
+Tests: `make test` runs all of these.
 
 | | Where | What |
 |---|---|---|
