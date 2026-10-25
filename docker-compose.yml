@@ -1,0 +1,102 @@
+name: greenleaf-pharmacy
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: pharmacy
+      POSTGRES_USER: pharmacy
+      POSTGRES_PASSWORD: pharmacy
+    ports:
+      - "5432:5432"
+    volumes:
+      # From PostgreSQL 18 the image keeps its data in a versioned directory under /var/lib/postgresql.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "pharmacy", "-d", "pharmacy"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    # Run as the image's rabbitmq user. Root works on most setups, but not under rootless/enhanced-isolation Docker.
+    user: "999:999"
+    environment:
+      # The default guest user may only connect from localhost, which rules out other containers.
+      RABBITMQ_DEFAULT_USER: pharmacy
+      RABBITMQ_DEFAULT_PASS: pharmacy
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # management UI: http://localhost:15672 (pharmacy / pharmacy)
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Observability: metrics (Prometheus), logs (Loki, fed by Alloy from logs/) and the dashboards over both (Grafana).
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    # The backend usually runs on the host, not in compose; this is how Prometheus reaches it (Docker Desktop has the
+    # name already, Linux needs the mapping).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9090:9090"   # http://localhost:9090
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+  loki:
+    image: grafana/loki:3.7.9
+    command: ["-config.file=/etc/loki/loki.yml"]
+    volumes:
+      - ./observability/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+
+  alloy:
+    image: grafana/alloy:v1.21.2
+    command:
+      - run
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    depends_on:
+      - loki
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # The backend writes its JSON log here (logs/pharmacy.log).
+      - ./logs:/var/log/pharmacy:ro
+      - alloy-data:/var/lib/alloy/data
+
+  grafana:
+    image: grafana/grafana:13.2.4
+    environment:
+      GF_SECURITY_ADMIN_USER: pharmacy
+      GF_SECURITY_ADMIN_PASSWORD: pharmacy
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/pharmacy-business.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    depends_on:
+      - prometheus
+      - loki
+    ports:
+      - "3000:3000"   # http://localhost:3000 (pharmacy / pharmacy)
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  prometheus-data:
+  loki-data:
+  alloy-data:
+  grafana-data:

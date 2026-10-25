@@ -1,0 +1,73 @@
+// Ships the backend's JSON log file (logs/pharmacy.log, see application.properties) to Loki.
+//
+// Each line becomes: the message as the log line (plus the stack trace, if any); the labels `log_type` (business or
+// system: see LogType in the backend) and `level`; the logger and the thread as structured metadata, which can be
+// filtered on without being labels. Few labels with few values, on purpose: Loki indexes labels, not the text.
+
+local.file_match "pharmacy_api" {
+  path_targets = [{
+    __path__     = "/var/log/pharmacy/*.log",
+    service_name = "pharmacy-api",
+  }]
+}
+
+loki.source.file "pharmacy_api" {
+  targets    = local.file_match.pharmacy_api.targets
+  forward_to = [loki.process.pharmacy_api.receiver]
+}
+
+loki.process "pharmacy_api" {
+  stage.json {
+    expressions = {
+      timestamp = "timestamp",
+      level     = "level",
+      log_type  = "mdc.log_type",
+      logger    = "loggerName",
+      thread    = "threadName",
+      message   = "message",
+      stack     = "stackTrace",
+    }
+  }
+
+  stage.timestamp {
+    source = "timestamp"
+    format = "RFC3339"
+  }
+
+  // A line without a mark (it should not happen) is a system line.
+  stage.template {
+    source   = "log_type"
+    template = "{{ if .log_type }}{{ .log_type }}{{ else }}system{{ end }}"
+  }
+
+  stage.labels {
+    values = {
+      log_type = "",
+      level    = "",
+    }
+  }
+
+  stage.structured_metadata {
+    values = {
+      logger = "",
+      thread = "",
+    }
+  }
+
+  stage.template {
+    source   = "line"
+    template = "{{ .message }}{{ if .stack }}\n{{ .stack }}{{ end }}"
+  }
+
+  stage.output {
+    source = "line"
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

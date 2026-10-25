@@ -1,0 +1,41 @@
+[versions]
+kotlin = "2.4.20"
+quarkus = "3.40.1"
+jooq = "3.21.9"
+amqp = "5.37.0"
+cucumber = "8.0.4"
+junit = "6.1.3"
+
+[libraries]
+quarkus-bom = { module = "io.quarkus.platform:quarkus-bom", version.ref = "quarkus" }
+# Versions below without a version are managed by the Quarkus BOM.
+quarkus-arc = { module = "io.quarkus:quarkus-arc" }
+quarkus-kotlin = { module = "io.quarkus:quarkus-kotlin" }
+quarkus-rest-jackson = { module = "io.quarkus:quarkus-rest-jackson" }
+quarkus-jdbc-postgresql = { module = "io.quarkus:quarkus-jdbc-postgresql" }
+quarkus-flyway = { module = "io.quarkus:quarkus-flyway" }
+quarkus-narayana-jta = { module = "io.quarkus:quarkus-narayana-jta" }
+quarkus-smallrye-health = { module = "io.quarkus:quarkus-smallrye-health" }
+quarkus-micrometer-prometheus = { module = "io.quarkus:quarkus-micrometer-registry-prometheus" }
+quarkus-logging-json = { module = "io.quarkus:quarkus-logging-json" }
+quarkus-junit = { module = "io.quarkus:quarkus-junit" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
+jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+rest-assured = { module = "io.rest-assured:rest-assured" }
+
+jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
+jooq-meta-extensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
+amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "amqp" }
+
+# Domain tests: Cucumber on the JUnit Platform. Versions come from the two BOMs.
+cucumber-bom = { module = "io.cucumber:cucumber-bom", version.ref = "cucumber" }
+cucumber-java = { module = "io.cucumber:cucumber-java" }
+cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-platform-suite = { module = "org.junit.platform:junit-platform-suite" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
+quarkus = { id = "io.quarkus", version.ref = "quarkus" }
+jooq-codegen = { id = "org.jooq.jooq-codegen-gradle", version.ref = "jooq" }

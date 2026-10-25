@@ -1,0 +1,25 @@
+# What Prometheus scrapes. The backend usually runs on the host (`./gradlew :infra:quarkusDev`), outside the compose
+# network: host.docker.internal is the host (docker-compose.yml maps it on Linux too). If the backend runs in a compose
+# service instead, change its target to that service's name.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # The backend: JVM, HTTP, connection pool, and the pharmacy_* business and system metrics.
+  - job_name: pharmacy-api
+    metrics_path: /q/metrics
+    static_configs:
+      - targets: ["host.docker.internal:8080"]
+
+  # RabbitMQ's own metrics (the rabbitmq_prometheus plugin, enabled in the image).
+  - job_name: rabbitmq
+    static_configs:
+      - targets: ["rabbitmq:15692"]
+
+  - job_name: loki
+    static_configs:
+      - targets: ["loki:3100"]
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

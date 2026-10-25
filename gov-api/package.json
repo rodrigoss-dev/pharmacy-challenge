@@ -1,0 +1,15 @@
+{
+	"name": "gov-api",
+	"private": true,
+	"version": "0.0.1",
+	"description": "Mock of the government prescription system the pharmacy integrates with",
+	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"start": "node src/main.js",
+		"dev": "node --watch src/main.js",
+		"test": "node --test"
+	}
+}

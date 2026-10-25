@@ -1,0 +1,12 @@
+.gradle/
+build/
+.kotlin/
+.idea/
+*.iml
+out/
+.DS_Store
+.claude
+
+# The backend's JSON log file (logs/pharmacy.log), read by the observability stack (see docker-compose.yml).
+*.log
+*.log.[0-9]*
